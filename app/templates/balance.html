@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% block title %}Управленческий баланс{% endblock %}
+{% block extra_css %}
+<style>
+    /* Гарантированная заливка фона для итоговых строк */
+    #balance-report .total-type {
+        background-color: #0d6efd !important;
+        color: white !important;
+        font-weight: bold !important;
+        font-size: 1.2em !important;
+    }
+    #balance-report .total-type td {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+    #balance-report .total-type:hover {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+
+    #balance-report .total-section {
+        background-color: #e9ecef !important;
+        font-weight: bold !important;
+    }
+    #balance-report .total-section td {
+        background-color: #e9ecef !important;
+    }
+    #balance-report .total-section:hover {
+        background-color: #e9ecef !important;
+    }
+
+    #balance-report .total-subsection {
+        background-color: #f8f9fa !important;
+        font-weight: bold !important;
+    }
+    #balance-report .total-subsection td {
+        background-color: #f8f9fa !important;
+    }
+    #balance-report .total-subsection:hover {
+        background-color: #f8f9fa !important;
+    }
+
+    /* Отключаем Bootstrap-эффекты для этих строк */
+    #balance-report .table-hover tbody tr.total-type:hover,
+    #balance-report .table-hover tbody tr.total-section:hover,
+    #balance-report .table-hover tbody tr.total-subsection:hover {
+        background-color: inherit !important;
+    }
+
+    .clickable-item {
+        cursor: pointer;
+    }
+    .clickable-item:hover {
+        background-color: #f1f1f1 !important;
+    }
+
+    .logic-summary td {
+        padding: 4px 8px;
+    }
+    .logic-summary .label {
+        font-weight: 500;
+    }
+    .logic-summary .value {
+        text-align: right;
+    }
+    .logic-summary .total-row {
+        font-weight: bold;
+        border-top: 2px solid #dee2e6;
+    }
+    .logic-summary .internal-row {
+        color: #d63384;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="page-title mb-0">Управленческий баланс</h2>
+</div>
+
+<div class="card p-3 mb-4">
+    <form id="balanceForm" class="row g-3">
+        <div class="col-md-4">
+            <label for="orgSelect" class="form-label">Организация</label>
+            <select class="form-select" id="orgSelect" required>
+                <option value="">Выберите организацию</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="periodDate" class="form-label">Дата периода</label>
+            <input type="date" class="form-control" id="periodDate" required>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Показать</button>
+        </div>
+    </form>
+</div>
+
+<div id="balanceResult">
+    <div class="text-center py-5">
+        <p class="text-muted">Выберите организацию и дату для просмотра баланса.</p>
+    </div>
+</div>
+
+<!-- Модальное окно для расшифровки -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">Расшифровка статьи</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="detailsContent">
+                    <!-- Логика расчёта -->
+                    <table class="table table-bordered logic-summary">
+                        <thead>
+                            <tr><th colspan="2">Логика расчёта</th></tr>
+                        </thead>
+                        <tbody id="logicTableBody">
+                        </tbody>
+                    </table>
+                    <!-- Детали по счетам (без сальдо) -->
+                    <h6>Детали по счетам</h6>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Счёт</th>
+                                <th>Источник</th>
+                                <th>Контрагент</th>
+                                <th class="text-end text-nowrap">Дебет</th>
+                                <th class="text-end text-nowrap">Кредит</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Загружаем список организаций
+    async function loadOrganizations() {
+        const select = document.getElementById('orgSelect');
+        try {
+            const res = await fetch('/api/v1/organizations/');
+            if (!res.ok) throw new Error('Ошибка загрузки');
+            const data = await res.json();
+            select.innerHTML = '<option value="">Выберите организацию</option>';
+            data.forEach(org => {
+                const opt = document.createElement('option');
+                opt.value = org.inn;
+                const name = org.name || 'без названия';
+                opt.textContent = `${org.inn} – ${name}`;
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            console.error('Ошибка загрузки организаций:', err);
+            select.innerHTML = '<option value="">Ошибка загрузки</option>';
+        }
+    }
+
+    // Форматирование чисел (разделение разрядов пробелами)
+    function fmt(val) {
+        if (val === undefined || val === null) return '0,00';
+        let num = typeof val === 'string' ? parseFloat(val.replace(',', '.')) : val;
+        if (isNaN(num)) return '0,00';
+        let parts = num.toFixed(2).split('.');
+        let intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        return intPart + ',' + (parts[1] || '00');
+    }
+
+    // Показать расшифровку
+    function showDetails(item) {
+        // Логика расчёта
+        const logicBody = document.getElementById('logicTableBody');
+        logicBody.innerHTML = '';
+
+        const fullDebit = item.full_debit || 0;
+        const fullCredit = item.full_credit || 0;
+        const intDebit = item.internal_debit || 0;
+        const intCredit = item.internal_credit || 0;
+
+        const rows = [
+            { label: 'Полная ОСВ (Дт)', value: fullDebit },
+            { label: 'Полная ОСВ (Кт)', value: fullCredit },
+            { label: 'Внутренние ОСВ (Дт)', value: intDebit, cls: 'internal-row' },
+            { label: 'Внутренние ОСВ (Кт)', value: intCredit, cls: 'internal-row' },
+        ];
+        rows.forEach(r => {
+            const tr = document.createElement('tr');
+            if (r.cls) tr.className = r.cls;
+            tr.innerHTML = `
+                <td class="label">${r.label}</td>
+                <td class="value text-nowrap">${fmt(r.value)}</td>
+            `;
+            logicBody.appendChild(tr);
+        });
+
+        const totalBalance = (fullDebit - fullCredit) - (intDebit - intCredit);
+        const trTotal = document.createElement('tr');
+        trTotal.className = 'total-row';
+        trTotal.innerHTML = `
+            <td class="label">Сальдо (Дт - Кт) после корректировки</td>
+            <td class="value text-nowrap">${fmt(totalBalance)}</td>
+        `;
+        logicBody.appendChild(trTotal);
+
+        // Детали по счетам (без сальдо)
+        const tbody = document.getElementById('detailsTableBody');
+        tbody.innerHTML = '';
+        if (!item.details || item.details.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Нет детальной информации</td></tr>';
+        } else {
+            item.details.forEach(d => {
+                const tr = document.createElement('tr');
+                const sourceLabel = d.source === 'internal' ? 'Внутренние' : 'Полная';
+                let counterpartyDisplay = '-';
+                if (d.counterparty_name) {
+                    counterpartyDisplay = `${d.counterparty_name} (${d.counterparty_inn})`;
+                } else if (d.counterparty_inn) {
+                    counterpartyDisplay = d.counterparty_inn;
+                }
+                tr.innerHTML = `
+                    <td>${d.account_code}</td>
+                    <td>${sourceLabel}</td>
+                    <td>${counterpartyDisplay}</td>
+                    <td class="text-end text-nowrap">${fmt(d.debit)}</td>
+                    <td class="text-end text-nowrap">${fmt(d.credit)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+        modal.show();
+    }
+
+    // Рендеринг одного типа (активы или пассивы)
+    function renderType(type) {
+        if (!type) return '<div class="text-muted">Нет данных</div>';
+
+        const typeLabel = type.is_active ? 'Активы ↓' : 'Пассивы ↓';
+        let html = `
+            <div class="mt-3" id="balance-report">
+                <table class="table table-borderless table-hover">
+                    <tr class="total-type">
+                        <td>${typeLabel}</td>
+                        <td class="text-end text-nowrap">${fmt(type.total_balance)}</td>
+                    </tr>
+        `;
+
+        type.sections.forEach(section => {
+            html += `
+                <tr class="total-section">
+                    <td>${section.name}</td>
+                    <td class="text-end text-nowrap">${fmt(section.total_balance)}</td>
+                </tr>
+            `;
+
+            section.subsections.forEach(sub => {
+                if (sub.name) {
+                    html += `
+                        <tr class="total-subsection">
+                            <td style="padding-left: 20px;">${sub.name}</td>
+                            <td class="text-end text-nowrap">${fmt(sub.total_balance)}</td>
+                        </tr>
+                    `;
+                }
+                sub.items.forEach(item => {
+                    const indent = sub.name ? '40px' : '20px';
+                    const itemJson = JSON.stringify(item).replace(/"/g, '&quot;');
+                    html += `
+                        <tr class="clickable-item">
+                            <td style="padding-left: ${indent};">${item.name}</td>
+                            <td class="text-end text-nowrap" onclick="showDetails(${itemJson})">${fmt(item.balance)}</td>
+                        </tr>
+                    `;
+                });
+            });
+        });
+
+        html += `</table></div>`;
+        return html;
+    }
+
+    // Загрузка и отображение баланса
+    document.getElementById('balanceForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const orgInn = document.getElementById('orgSelect').value;
+        const periodDate = document.getElementById('periodDate').value;
+        if (!orgInn || !periodDate) {
+            alert('Выберите организацию и дату');
+            return;
+        }
+
+        const container = document.getElementById('balanceResult');
+        container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Загрузка...</span></div></div>';
+
+        try {
+            const res = await fetch(`/api/v1/balance/${orgInn}/${periodDate}`);
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'Ошибка загрузки');
+            }
+            const data = await res.json();
+
+            const assetsType = data.sections.find(t => t.is_active === true);
+            const liabilitiesType = data.sections.find(t => t.is_active === false);
+
+            const totalAssets = assetsType ? assetsType.total_balance : 0;
+            const totalLiabilities = liabilitiesType ? liabilitiesType.total_balance : 0;
+            const isBalanced = Math.abs(totalAssets - totalLiabilities) < 0.01;
+
+            let html = `
+                <div class="card p-3 mb-3">
+                    <div class="row">
+                        <div class="col-md-6"><strong>Организация:</strong> ${data.organization_inn} – ${data.organization_name || 'не указано'}</div>
+                        <div class="col-md-6 text-md-end"><strong>Дата периода:</strong> ${data.period_date}</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        ${renderType(assetsType)}
+                    </div>
+                    <div class="col-md-6">
+                        ${renderType(liabilitiesType)}
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="alert ${isBalanced ? 'alert-success' : 'alert-danger'}">
+                            <strong>Проверка:</strong> Активы = Пассивы ${isBalanced ? '✅' : '❌'} (Активы: ${fmt(totalAssets)}, Пассивы: ${fmt(totalLiabilities)})
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+        }
+    });
+
+    loadOrganizations();
+</script>
+{% endblock %}

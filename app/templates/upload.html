@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Загрузка ОСВ{% endblock %}
+{% block content %}
+<h2 class="page-title">Загрузка оборотно-сальдовых ведомостей</h2>
+<div class="card p-4">
+    <p class="text-muted">Выберите два файла: полную ОСВ и внутреннюю ОСВ. Дата периода и организация будут определены автоматически, если они указаны в файлах. При необходимости выберите организацию вручную.</p>
+    <form id="uploadForm" enctype="multipart/form-data" class="mt-3">
+        <div class="mb-3">
+            <label for="orgSelect" class="form-label fw-semibold">Организация (опционально)</label>
+            <select class="form-select" id="orgSelect">
+                <option value="">Автоматически (из файла)</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="full_file" class="form-label fw-semibold">Полная ОСВ (файл)</label>
+            <input type="file" class="form-control" id="full_file" name="full_osv" accept=".xlsx,.xls" required>
+        </div>
+        <div class="mb-3">
+            <label for="internal_file" class="form-label fw-semibold">Внутренняя ОСВ (файл)</label>
+            <input type="file" class="form-control" id="internal_file" name="internal_osv" accept=".xlsx,.xls" required>
+        </div>
+        <button type="submit" class="btn btn-success"><i class="bi bi-upload"></i> Загрузить и обработать</button>
+        <a href="/" class="btn btn-secondary">Отмена</a>
+    </form>
+    <div id="message" class="mt-3"></div>
+</div>
+
+<script>
+    // Загружаем организации для выпадающего списка
+    async function loadOrganizations() {
+        const select = document.getElementById('orgSelect');
+        try {
+            const res = await fetch('/api/v1/organizations/');
+            if (!res.ok) throw new Error('Ошибка загрузки организаций');
+            const data = await res.json();
+            // Оставляем первую опцию "Автоматически"
+            data.forEach(org => {
+                const opt = document.createElement('option');
+                opt.value = org.inn;
+                opt.textContent = `${org.inn} – ${org.name || 'без названия'}`;
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            console.error('Ошибка загрузки организаций:', err);
+        }
+    }
+
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        // Добавляем выбранную организацию, если она не пустая
+        const orgSelect = document.getElementById('orgSelect');
+        if (orgSelect.value) {
+            formData.append('organization_inn', orgSelect.value);
+        }
+        const msgDiv = document.getElementById('message');
+        msgDiv.innerHTML = '<div class="alert alert-info">Загрузка...</div>';
+        try {
+            const response = await fetch('/api/v1/upload/', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            if (response.ok) {
+                msgDiv.innerHTML = `<div class="alert alert-success">Успешно! Загружено записей: полная ОСВ - ${result.balances_count}, внутренних - ${result.internal_count}. <a href="/report/${result.organization_inn}/${result.period_date}">Просмотреть отчёт</a></div>`;
+            } else {
+                let errorMsg = result.detail || 'Неизвестная ошибка';
+                // Если ошибка связана с отсутствием ИНН, предлагаем выбрать организацию
+                if (errorMsg.includes('не указан ИНН организации')) {
+                    errorMsg += ' Пожалуйста, выберите организацию вручную.';
+                    document.getElementById('orgSelect').focus();
+                }
+                msgDiv.innerHTML = `<div class="alert alert-danger">Ошибка: ${errorMsg}</div>`;
+            }
+        } catch (err) {
+            msgDiv.innerHTML = `<div class="alert alert-danger">Ошибка сети: ${err.message}</div>`;
+        }
+    });
+
+    loadOrganizations();
+</script>
+{% endblock %}

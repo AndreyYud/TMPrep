@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% block title %}Правила отнесения счетов к балансу{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="page-title mb-0">Правила отнесения счетов к балансу</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ruleModal" onclick="clearRuleForm()">
+        <i class="bi bi-plus-circle"></i> Добавить правило
+    </button>
+</div>
+
+<div id="rulesList">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="ruleModal" tabindex="-1" aria-labelledby="ruleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ruleModalLabel">Правило</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <form id="ruleForm">
+                    <input type="hidden" id="ruleId">
+                    <div class="mb-3">
+                        <label for="ruleAccounts" class="form-label fw-semibold">Коды счетов</label>
+                        <select class="form-select" id="ruleAccounts" multiple size="5" required>
+                        </select>
+                        <small class="text-muted">Удерживайте Ctrl (Cmd) для выбора нескольких счетов</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ruleSection" class="form-label fw-semibold">Раздел</label>
+                        <select class="form-select" id="ruleSection" required>
+                            <option value="">Выберите раздел</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ruleSubsection" class="form-label fw-semibold">Подраздел</label>
+                        <select class="form-select" id="ruleSubsection" required>
+                            <option value="">Сначала выберите раздел</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ruleItem" class="form-label fw-semibold">Статья</label>
+                        <input type="text" class="form-control" id="ruleItem" placeholder="Введите название статьи">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Тип баланса</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="ruleIsActive" checked>
+                            <label class="form-check-label" for="ruleIsActive">Актив</label>
+                        </div>
+                        <small class="text-muted">Выключите для обозначения пассива</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveRuleBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let editRuleId = null;
+    let accountsData = [];
+
+    // Загружаем список счетов для выбора
+    async function loadAccounts() {
+        try {
+            const res = await fetch('/api/v1/accounts/');
+            if (!res.ok) throw new Error('Ошибка загрузки счетов');
+            accountsData = await res.json();
+            const select = document.getElementById('ruleAccounts');
+            select.innerHTML = '';
+            accountsData.forEach(acc => {
+                const option = document.createElement('option');
+                option.value = acc.code;
+                option.textContent = `${acc.code} - ${acc.name || 'без названия'}`;
+                select.appendChild(option);
+            });
+        } catch (err) {
+            console.error('Ошибка загрузки счетов:', err);
+            const select = document.getElementById('ruleAccounts');
+            select.innerHTML = `<option value="">Ошибка загрузки счетов</option>`;
+        }
+    }
+
+    // Загружаем разделы в выпадающий список
+    async function loadSections() {
+        try {
+            const res = await fetch('/api/v1/balance-sections/');
+            if (!res.ok) throw new Error('Ошибка загрузки разделов');
+            const data = await res.json();
+            const select = document.getElementById('ruleSection');
+            select.innerHTML = '<option value="">Выберите раздел</option>';
+            data.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                select.appendChild(opt);
+            });
+            // Если есть sectionsData для использования в других местах, можно сохранить
+        } catch (err) {
+            console.error('Ошибка загрузки разделов:', err);
+            const select = document.getElementById('ruleSection');
+            select.innerHTML = '<option value="">Ошибка загрузки разделов</option>';
+        }
+    }
+
+    // Загружаем подразделы по id раздела
+    async function loadSubsections(sectionId) {
+        const select = document.getElementById('ruleSubsection');
+        select.innerHTML = '<option value="">Загрузка...</option>';
+        if (!sectionId) {
+            select.innerHTML = '<option value="">Сначала выберите раздел</option>';
+            return;
+        }
+        try {
+            const res = await fetch(`/api/v1/balance-subsections/?section_id=${sectionId}`);
+            if (!res.ok) throw new Error('Ошибка загрузки подразделов');
+            const data = await res.json();
+            select.innerHTML = '<option value="">Выберите подраздел</option>';
+            data.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            console.error('Ошибка загрузки подразделов:', err);
+            select.innerHTML = '<option value="">Ошибка загрузки подразделов</option>';
+        }
+    }
+
+    // Очистка формы
+    function clearRuleForm() {
+        document.getElementById('ruleId').value = '';
+        // Снимаем все выделения в select счетов
+        const select = document.getElementById('ruleAccounts');
+        Array.from(select.options).forEach(opt => opt.selected = false);
+        document.getElementById('ruleSection').value = '';
+        document.getElementById('ruleSubsection').innerHTML = '<option value="">Сначала выберите раздел</option>';
+        document.getElementById('ruleItem').value = '';
+        document.getElementById('ruleIsActive').checked = true;
+        editRuleId = null;
+        document.getElementById('ruleModalLabel').innerText = 'Добавить правило';
+    }
+
+    // Загрузка списка правил
+    async function loadRules() {
+        const container = document.getElementById('rulesList');
+        try {
+            const res = await fetch('/api/v1/balance-rules/');
+            if (!res.ok) throw new Error('Ошибка загрузки правил');
+            const data = await res.json();
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <p class="text-muted">Правила не заданы.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ruleModal" onclick="clearRuleForm()">
+                            <i class="bi bi-plus-circle"></i> Добавить первое правило
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            let html = `
+                <div class="card p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Счета</th>
+                                    <th>Раздел</th>
+                                    <th>Подраздел</th>
+                                    <th>Статья</th>
+                                    <th>Тип</th>
+                                    <th class="text-end">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            data.forEach(rule => {
+                const accountsStr = rule.account_codes.join(', ');
+                const typeLabel = rule.is_active ? 'Актив' : 'Пассив';
+                html += `
+                    <tr>
+                        <td>${accountsStr}</td>
+                        <td>${rule.section.name}</td>
+                        <td>${rule.subsection.name}</td>
+                        <td>${rule.item || '-'}</td>
+                        <td>${typeLabel}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-warning me-1" data-bs-toggle="modal" data-bs-target="#ruleModal" onclick="editRule(${rule.id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteRule(${rule.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">
+                    Всего: <span class="badge-count">${data.length}</span>
+                </div>
+            `;
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = `<div class="alert alert-danger">Ошибка загрузки правил: ${err.message}</div>`;
+        }
+    }
+
+    // Редактирование правила
+    async function editRule(id) {
+        try {
+            const res = await fetch(`/api/v1/balance-rules/${id}`);
+            if (!res.ok) throw new Error('Ошибка загрузки правила');
+            const rule = await res.json();
+            document.getElementById('ruleId').value = rule.id;
+
+            // Выбираем счета
+            const selectAccounts = document.getElementById('ruleAccounts');
+            Array.from(selectAccounts.options).forEach(opt => {
+                opt.selected = rule.account_codes.includes(opt.value);
+            });
+
+            // Устанавливаем раздел
+            document.getElementById('ruleSection').value = rule.section_id;
+            // Загружаем подразделы для этого раздела
+            await loadSubsections(rule.section_id);
+            // Устанавливаем подраздел
+            document.getElementById('ruleSubsection').value = rule.subsection_id;
+
+            // Статья и тип
+            document.getElementById('ruleItem').value = rule.item || '';
+            document.getElementById('ruleIsActive').checked = rule.is_active;
+
+            editRuleId = rule.id;
+            document.getElementById('ruleModalLabel').innerText = 'Редактировать правило';
+        } catch (err) {
+            alert('Ошибка: ' + err.message);
+        }
+    }
+
+    // Удаление правила
+    async function deleteRule(id) {
+        if (!confirm('Удалить правило?')) return;
+        try {
+            const res = await fetch(`/api/v1/balance-rules/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                await loadRules();
+            } else {
+                const err = await res.json();
+                alert('Ошибка: ' + (err.detail || 'Неизвестная ошибка'));
+            }
+        } catch (err) {
+            alert('Ошибка сети: ' + err.message);
+        }
+    }
+
+    // Сохранение правила (создание/обновление)
+    document.getElementById('saveRuleBtn').addEventListener('click', async () => {
+        const id = document.getElementById('ruleId').value;
+        const selectAccounts = document.getElementById('ruleAccounts');
+        const account_codes = Array.from(selectAccounts.selectedOptions).map(opt => opt.value);
+        const section_id = parseInt(document.getElementById('ruleSection').value);
+        const subsection_id = parseInt(document.getElementById('ruleSubsection').value);
+        const item = document.getElementById('ruleItem').value.trim() || null;
+        const isActive = document.getElementById('ruleIsActive').checked;
+
+        if (account_codes.length === 0) {
+            alert('Выберите хотя бы один счёт');
+            return;
+        }
+        if (!section_id) {
+            alert('Выберите раздел');
+            return;
+        }
+        if (!subsection_id) {
+            alert('Выберите подраздел');
+            return;
+        }
+
+        const payload = {
+            account_codes: account_codes,
+            section_id: section_id,
+            subsection_id: subsection_id,
+            item: item,
+            is_active: isActive
+        };
+
+        const url = id ? `/api/v1/balance-rules/${id}` : '/api/v1/balance-rules/';
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('ruleModal'));
+                modal.hide();
+                await loadRules();
+            } else {
+                const err = await res.json();
+                alert('Ошибка: ' + (err.detail || 'Неизвестная ошибка'));
+            }
+        } catch (err) {
+            alert('Ошибка сети: ' + err.message);
+        }
+    });
+
+    // Обработчик изменения раздела для загрузки подразделов
+    document.getElementById('ruleSection').addEventListener('change', function() {
+        const sectionId = this.value;
+        loadSubsections(sectionId);
+    });
+
+    // Инициализация страницы
+    async function init() {
+        await loadAccounts();
+        await loadSections();
+        await loadRules();
+        // Устанавливаем начальное состояние для подразделов
+        document.getElementById('ruleSubsection').innerHTML = '<option value="">Сначала выберите раздел</option>';
+    }
+    init();
+</script>
+{% endblock %}

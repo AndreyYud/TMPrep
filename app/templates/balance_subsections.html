@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Подразделы баланса{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="page-title mb-0">Подразделы баланса</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#subModal" onclick="clearSubForm()">
+        <i class="bi bi-plus-circle"></i> Добавить подраздел
+    </button>
+</div>
+
+<div id="subsectionsList">
+    <div class="text-center py-5"><div class="spinner-border text-primary"><span class="visually-hidden">Загрузка...</span></div></div>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="subModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="subModalLabel">Подраздел</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="subForm">
+                    <input type="hidden" id="subId">
+                    <div class="mb-3">
+                        <label for="subSection" class="form-label fw-semibold">Раздел</label>
+                        <select class="form-select" id="subSection" required></select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subName" class="form-label fw-semibold">Название</label>
+                        <input type="text" class="form-control" id="subName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subOrder" class="form-label">Порядок</label>
+                        <input type="number" class="form-control" id="subOrder" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button class="btn btn-primary" id="saveSubBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let editSubId = null;
+    let sections = [];
+
+    async function loadSectionsForSelect() {
+        const res = await fetch('/api/v1/balance-sections/');
+        sections = await res.json();
+        const select = document.getElementById('subSection');
+        select.innerHTML = '<option value="">Выберите раздел</option>';
+        sections.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            select.appendChild(opt);
+        });
+    }
+
+    async function loadSubsections() {
+        const container = document.getElementById('subsectionsList');
+        try {
+            const res = await fetch('/api/v1/balance-subsections/');
+            if (!res.ok) throw new Error('Ошибка загрузки');
+            const data = await res.json();
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <p class="text-muted">Подразделы не добавлены.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#subModal" onclick="clearSubForm()">
+                            <i class="bi bi-plus-circle"></i> Добавить первый подраздел
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            let html = `<div class="card p-0"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Раздел</th><th>Название</th><th>Порядок</th><th class="text-end">Действия</th></tr></thead><tbody>`;
+            data.forEach(sub => {
+                const sectionName = sections.find(s => s.id === sub.section_id)?.name || sub.section_id;
+                html += `<tr>
+                    <td>${sectionName}</td>
+                    <td>${sub.name}</td>
+                    <td>${sub.order}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-warning me-1" data-bs-toggle="modal" data-bs-target="#subModal" onclick="editSub(${sub.id}, ${sub.section_id}, '${sub.name}', ${sub.order})"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSub(${sub.id})"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+        }
+    }
+
+    function clearSubForm() {
+        document.getElementById('subId').value = '';
+        document.getElementById('subSection').value = '';
+        document.getElementById('subName').value = '';
+        document.getElementById('subOrder').value = 0;
+        editSubId = null;
+        document.getElementById('subModalLabel').innerText = 'Добавить подраздел';
+    }
+
+    function editSub(id, sectionId, name, order) {
+        editSubId = id;
+        document.getElementById('subId').value = id;
+        document.getElementById('subSection').value = sectionId;
+        document.getElementById('subName').value = name;
+        document.getElementById('subOrder').value = order;
+        document.getElementById('subModalLabel').innerText = 'Редактировать подраздел';
+    }
+
+    async function deleteSub(id) {
+        if (!confirm('Удалить подраздел?')) return;
+        try {
+            const res = await fetch(`/api/v1/balance-subsections/${id}`, { method: 'DELETE' });
+            if (res.ok) await loadSubsections();
+            else { const err = await res.json(); alert(err.detail); }
+        } catch (e) { alert(e.message); }
+    }
+
+    document.getElementById('saveSubBtn').addEventListener('click', async () => {
+        const id = document.getElementById('subId').value;
+        const section_id = parseInt(document.getElementById('subSection').value);
+        const name = document.getElementById('subName').value.trim();
+        const order = parseInt(document.getElementById('subOrder').value) || 0;
+        if (!section_id) { alert('Выберите раздел'); return; }
+        if (!name) { alert('Введите название'); return; }
+        const payload = { section_id, name, order };
+        const url = id ? `/api/v1/balance-subsections/${id}` : '/api/v1/balance-subsections/';
+        const method = id ? 'PUT' : 'POST';
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('subModal')).hide();
+                await loadSubsections();
+            } else {
+                const err = await res.json();
+                alert(err.detail || 'Ошибка');
+            }
+        } catch (e) { alert(e.message); }
+    });
+
+    async function init() {
+        await loadSectionsForSelect();
+        await loadSubsections();
+    }
+    init();
+</script>
+{% endblock %}

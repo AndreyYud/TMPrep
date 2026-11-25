@@ -1,0 +1,978 @@
+{
+  "account": [
+    {
+      "id": 1,
+      "code": "000",
+      "name": "Вспомогательный счет"
+    },
+    {
+      "id": 2,
+      "code": "01",
+      "name": "Основные средства"
+    },
+    {
+      "id": 3,
+      "code": "02",
+      "name": "Амортизация основных средств"
+    },
+    {
+      "id": 4,
+      "code": "03",
+      "name": "Доходные вложения в материальные ценности"
+    },
+    {
+      "id": 5,
+      "code": "04",
+      "name": "Нематериальные активы"
+    },
+    {
+      "id": 6,
+      "code": "05",
+      "name": "Амортизация нематериальных активов"
+    },
+    {
+      "id": 7,
+      "code": "07",
+      "name": "Оборудование к установке"
+    },
+    {
+      "id": 8,
+      "code": "08",
+      "name": "Вложения во внеоборотные активы"
+    },
+    {
+      "id": 9,
+      "code": "09",
+      "name": "Отложенные налоговые активы"
+    },
+    {
+      "id": 10,
+      "code": "10",
+      "name": "Материалы"
+    },
+    {
+      "id": 11,
+      "code": "11",
+      "name": "Животные на выращивании и откорме"
+    },
+    {
+      "id": 12,
+      "code": "14",
+      "name": "Резервы под снижение стоимости материальных ценностей"
+    },
+    {
+      "id": 13,
+      "code": "15",
+      "name": "Заготовление и приобретение материальных ценностей"
+    },
+    {
+      "id": 14,
+      "code": "16",
+      "name": "Отклонение в стоимости материальных ценностей"
+    },
+    {
+      "id": 15,
+      "code": "19",
+      "name": "НДС по приобретенным ценностям"
+    },
+    {
+      "id": 16,
+      "code": "20",
+      "name": "Основное производство"
+    },
+    {
+      "id": 17,
+      "code": "21",
+      "name": "Полуфабрикаты собственного производства"
+    },
+    {
+      "id": 18,
+      "code": "23",
+      "name": "Вспомогательные производства"
+    },
+    {
+      "id": 19,
+      "code": "25",
+      "name": "Общепроизводственные расходы"
+    },
+    {
+      "id": 20,
+      "code": "26",
+      "name": "Общехозяйственные расходы"
+    },
+    {
+      "id": 21,
+      "code": "28",
+      "name": "Брак в производстве"
+    },
+    {
+      "id": 22,
+      "code": "29",
+      "name": "Обслуживающие производства и хозяйства"
+    },
+    {
+      "id": 23,
+      "code": "40",
+      "name": "Выпуск продукции (работ, услуг)"
+    },
+    {
+      "id": 24,
+      "code": "41",
+      "name": "Товары"
+    },
+    {
+      "id": 25,
+      "code": "42",
+      "name": "Торговая наценка"
+    },
+    {
+      "id": 26,
+      "code": "43",
+      "name": "Готовая продукция"
+    },
+    {
+      "id": 27,
+      "code": "44",
+      "name": "Расходы на продажу"
+    },
+    {
+      "id": 28,
+      "code": "45",
+      "name": "Товары отгруженные"
+    },
+    {
+      "id": 29,
+      "code": "46",
+      "name": "Выполненные этапы по незавершенным работам"
+    },
+    {
+      "id": 30,
+      "code": "50",
+      "name": "Касса"
+    },
+    {
+      "id": 31,
+      "code": "51",
+      "name": "Расчетные счета"
+    },
+    {
+      "id": 32,
+      "code": "52",
+      "name": "Валютные счета"
+    },
+    {
+      "id": 33,
+      "code": "53",
+      "name": "Счет цифрового рубля"
+    },
+    {
+      "id": 34,
+      "code": "55",
+      "name": "Специальные счета в банках"
+    },
+    {
+      "id": 35,
+      "code": "57",
+      "name": "Переводы в пути"
+    },
+    {
+      "id": 36,
+      "code": "58",
+      "name": "Финансовые вложения"
+    },
+    {
+      "id": 37,
+      "code": "59",
+      "name": "Резервы под обесценение финансовых вложений"
+    },
+    {
+      "id": 38,
+      "code": "60",
+      "name": "Расчеты с поставщиками и подрядчиками"
+    },
+    {
+      "id": 39,
+      "code": "62",
+      "name": "Расчеты с покупателями и заказчиками"
+    },
+    {
+      "id": 40,
+      "code": "63",
+      "name": "Резервы по сомнительным долгам"
+    },
+    {
+      "id": 41,
+      "code": "66",
+      "name": "Расчеты по краткосрочным кредитам и займам"
+    },
+    {
+      "id": 42,
+      "code": "67",
+      "name": "Расчеты по долгосрочным кредитам и займам"
+    },
+    {
+      "id": 43,
+      "code": "68",
+      "name": "Расчеты по налогам и сборам"
+    },
+    {
+      "id": 44,
+      "code": "69",
+      "name": "Расчеты по социальному страхованию и обеспечению"
+    },
+    {
+      "id": 45,
+      "code": "70",
+      "name": "Расчеты с персоналом по оплате труда"
+    },
+    {
+      "id": 46,
+      "code": "71",
+      "name": "Расчеты с подотчетными лицами"
+    },
+    {
+      "id": 47,
+      "code": "73",
+      "name": "Расчеты с персоналом по прочим операциям"
+    },
+    {
+      "id": 48,
+      "code": "75",
+      "name": "Расчеты с учредителями"
+    },
+    {
+      "id": 49,
+      "code": "76",
+      "name": "Расчеты с разными дебиторами и кредиторами"
+    },
+    {
+      "id": 50,
+      "code": "77",
+      "name": "Отложенные налоговые обязательства"
+    },
+    {
+      "id": 51,
+      "code": "79",
+      "name": "Внутрихозяйственные расчеты"
+    },
+    {
+      "id": 52,
+      "code": "80",
+      "name": "Уставный капитал"
+    },
+    {
+      "id": 53,
+      "code": "81",
+      "name": "Собственные акции (доли)"
+    },
+    {
+      "id": 54,
+      "code": "82",
+      "name": "Резервный капитал"
+    },
+    {
+      "id": 55,
+      "code": "83",
+      "name": "Добавочный капитал"
+    },
+    {
+      "id": 56,
+      "code": "84",
+      "name": "Нераспределенная прибыль (непокрытый убыток)"
+    },
+    {
+      "id": 57,
+      "code": "86",
+      "name": "Целевое финансирование"
+    },
+    {
+      "id": 58,
+      "code": "90",
+      "name": "Продажи"
+    },
+    {
+      "id": 59,
+      "code": "91",
+      "name": "Прочие доходы и расходы"
+    },
+    {
+      "id": 60,
+      "code": "94",
+      "name": "Недостачи и потери от порчи ценностей"
+    },
+    {
+      "id": 61,
+      "code": "96",
+      "name": "Резервы предстоящих расходов"
+    },
+    {
+      "id": 62,
+      "code": "97",
+      "name": "Расходы будущих периодов"
+    },
+    {
+      "id": 63,
+      "code": "98",
+      "name": "Доходы будущих периодов"
+    },
+    {
+      "id": 64,
+      "code": "99",
+      "name": "Прибыли и убытки"
+    }
+  ],
+  "balance_rule": [
+    {
+      "id": 1,
+      "section_id": 1,
+      "subsection_id": 1,
+      "item": "Остаточная стоимость ОС",
+      "is_active": true
+    },
+    {
+      "id": 2,
+      "section_id": 1,
+      "subsection_id": 2,
+      "item": "Остаточная стоимость НМА",
+      "is_active": true
+    },
+    {
+      "id": 3,
+      "section_id": 1,
+      "subsection_id": 3,
+      "item": "Вложения в ОС и НМА",
+      "is_active": true
+    },
+    {
+      "id": 4,
+      "section_id": 1,
+      "subsection_id": 4,
+      "item": "Прочие внеоборотные активы",
+      "is_active": true
+    },
+    {
+      "id": 5,
+      "section_id": 2,
+      "subsection_id": 5,
+      "item": "Материалы",
+      "is_active": true
+    },
+    {
+      "id": 6,
+      "section_id": 2,
+      "subsection_id": 5,
+      "item": "Товары",
+      "is_active": true
+    },
+    {
+      "id": 7,
+      "section_id": 2,
+      "subsection_id": 5,
+      "item": "Готовая продукция",
+      "is_active": true
+    },
+    {
+      "id": 8,
+      "section_id": 2,
+      "subsection_id": 5,
+      "item": "Незавершенное производство",
+      "is_active": true
+    },
+    {
+      "id": 9,
+      "section_id": 2,
+      "subsection_id": 6,
+      "item": "Кредиты и займы выданные",
+      "is_active": true
+    },
+    {
+      "id": 10,
+      "section_id": 2,
+      "subsection_id": 7,
+      "item": "Долги покупателей",
+      "is_active": true
+    },
+    {
+      "id": 11,
+      "section_id": 2,
+      "subsection_id": 7,
+      "item": "Авансы поставщикам",
+      "is_active": true
+    },
+    {
+      "id": 12,
+      "section_id": 2,
+      "subsection_id": 7,
+      "item": "Прочие дебиторы",
+      "is_active": true
+    },
+    {
+      "id": 13,
+      "section_id": 2,
+      "subsection_id": 7,
+      "item": "Задолженность по зарплате",
+      "is_active": true
+    },
+    {
+      "id": 14,
+      "section_id": 2,
+      "subsection_id": 7,
+      "item": "Прочая задолженность перед сотрудниками",
+      "is_active": true
+    },
+    {
+      "id": 15,
+      "section_id": 2,
+      "subsection_id": 8,
+      "item": "НДС входящий",
+      "is_active": true
+    },
+    {
+      "id": 16,
+      "section_id": 2,
+      "subsection_id": 9,
+      "item": "Наличные ДС",
+      "is_active": true
+    },
+    {
+      "id": 17,
+      "section_id": 2,
+      "subsection_id": 9,
+      "item": "Безналичные ДС",
+      "is_active": true
+    },
+    {
+      "id": 18,
+      "section_id": 2,
+      "subsection_id": 9,
+      "item": "Деньги в пути",
+      "is_active": true
+    },
+    {
+      "id": 19,
+      "section_id": 2,
+      "subsection_id": 16,
+      "item": "Расходы будущих периодов",
+      "is_active": true
+    },
+    {
+      "id": 20,
+      "section_id": 3,
+      "subsection_id": 10,
+      "item": "Прибыль/убыток",
+      "is_active": false
+    },
+    {
+      "id": 21,
+      "section_id": 3,
+      "subsection_id": 11,
+      "item": "Уставной капитал",
+      "is_active": false
+    },
+    {
+      "id": 22,
+      "section_id": 4,
+      "subsection_id": 12,
+      "item": "Долгосрочные кредиты и займы полученные",
+      "is_active": false
+    },
+    {
+      "id": 23,
+      "section_id": 4,
+      "subsection_id": 13,
+      "item": "Краткосрочные кредиты и займы полученные",
+      "is_active": false
+    },
+    {
+      "id": 24,
+      "section_id": 4,
+      "subsection_id": 14,
+      "item": "Задолженность перед поставщиками",
+      "is_active": false
+    },
+    {
+      "id": 25,
+      "section_id": 4,
+      "subsection_id": 14,
+      "item": "Авансы покупателей",
+      "is_active": false
+    },
+    {
+      "id": 26,
+      "section_id": 4,
+      "subsection_id": 14,
+      "item": "Прочие кредиторы",
+      "is_active": false
+    },
+    {
+      "id": 27,
+      "section_id": 4,
+      "subsection_id": 14,
+      "item": "Переплаты сотрудникам по ЗП",
+      "is_active": false
+    },
+    {
+      "id": 28,
+      "section_id": 4,
+      "subsection_id": 14,
+      "item": "Долги сотрудников перед организацией",
+      "is_active": false
+    },
+    {
+      "id": 29,
+      "section_id": 4,
+      "subsection_id": 15,
+      "item": "Задолженность по налогам",
+      "is_active": false
+    },
+    {
+      "id": 30,
+      "section_id": 4,
+      "subsection_id": 17,
+      "item": "Доходы будущих периодов",
+      "is_active": false
+    }
+  ],
+  "balance_rule_account": [
+    {
+      "balance_rule_id": 1,
+      "account_id": 2
+    },
+    {
+      "balance_rule_id": 1,
+      "account_id": 3
+    },
+    {
+      "balance_rule_id": 2,
+      "account_id": 6
+    },
+    {
+      "balance_rule_id": 2,
+      "account_id": 5
+    },
+    {
+      "balance_rule_id": 3,
+      "account_id": 7
+    },
+    {
+      "balance_rule_id": 3,
+      "account_id": 8
+    },
+    {
+      "balance_rule_id": 4,
+      "account_id": 9
+    },
+    {
+      "balance_rule_id": 4,
+      "account_id": 4
+    },
+    {
+      "balance_rule_id": 5,
+      "account_id": 10
+    },
+    {
+      "balance_rule_id": 6,
+      "account_id": 24
+    },
+    {
+      "balance_rule_id": 6,
+      "account_id": 25
+    },
+    {
+      "balance_rule_id": 7,
+      "account_id": 29
+    },
+    {
+      "balance_rule_id": 7,
+      "account_id": 23
+    },
+    {
+      "balance_rule_id": 7,
+      "account_id": 26
+    },
+    {
+      "balance_rule_id": 6,
+      "account_id": 28
+    },
+    {
+      "balance_rule_id": 8,
+      "account_id": 27
+    },
+    {
+      "balance_rule_id": 8,
+      "account_id": 20
+    },
+    {
+      "balance_rule_id": 8,
+      "account_id": 19
+    },
+    {
+      "balance_rule_id": 8,
+      "account_id": 16
+    },
+    {
+      "balance_rule_id": 8,
+      "account_id": 22
+    },
+    {
+      "balance_rule_id": 8,
+      "account_id": 17
+    },
+    {
+      "balance_rule_id": 8,
+      "account_id": 21
+    },
+    {
+      "balance_rule_id": 8,
+      "account_id": 18
+    },
+    {
+      "balance_rule_id": 9,
+      "account_id": 36
+    },
+    {
+      "balance_rule_id": 10,
+      "account_id": 39
+    },
+    {
+      "balance_rule_id": 11,
+      "account_id": 38
+    },
+    {
+      "balance_rule_id": 12,
+      "account_id": 49
+    },
+    {
+      "balance_rule_id": 13,
+      "account_id": 45
+    },
+    {
+      "balance_rule_id": 14,
+      "account_id": 46
+    },
+    {
+      "balance_rule_id": 14,
+      "account_id": 47
+    },
+    {
+      "balance_rule_id": 15,
+      "account_id": 15
+    },
+    {
+      "balance_rule_id": 16,
+      "account_id": 30
+    },
+    {
+      "balance_rule_id": 17,
+      "account_id": 31
+    },
+    {
+      "balance_rule_id": 17,
+      "account_id": 33
+    },
+    {
+      "balance_rule_id": 17,
+      "account_id": 32
+    },
+    {
+      "balance_rule_id": 17,
+      "account_id": 34
+    },
+    {
+      "balance_rule_id": 18,
+      "account_id": 35
+    },
+    {
+      "balance_rule_id": 19,
+      "account_id": 62
+    },
+    {
+      "balance_rule_id": 20,
+      "account_id": 59
+    },
+    {
+      "balance_rule_id": 20,
+      "account_id": 64
+    },
+    {
+      "balance_rule_id": 20,
+      "account_id": 56
+    },
+    {
+      "balance_rule_id": 20,
+      "account_id": 58
+    },
+    {
+      "balance_rule_id": 21,
+      "account_id": 52
+    },
+    {
+      "balance_rule_id": 22,
+      "account_id": 42
+    },
+    {
+      "balance_rule_id": 23,
+      "account_id": 41
+    },
+    {
+      "balance_rule_id": 24,
+      "account_id": 38
+    },
+    {
+      "balance_rule_id": 25,
+      "account_id": 39
+    },
+    {
+      "balance_rule_id": 26,
+      "account_id": 49
+    },
+    {
+      "balance_rule_id": 27,
+      "account_id": 45
+    },
+    {
+      "balance_rule_id": 28,
+      "account_id": 46
+    },
+    {
+      "balance_rule_id": 28,
+      "account_id": 47
+    },
+    {
+      "balance_rule_id": 29,
+      "account_id": 43
+    },
+    {
+      "balance_rule_id": 29,
+      "account_id": 44
+    },
+    {
+      "balance_rule_id": 30,
+      "account_id": 63
+    }
+  ],
+  "balance_section": [
+    {
+      "id": 1,
+      "name": "Внеоборотные активы",
+      "order": 100
+    },
+    {
+      "id": 2,
+      "name": "Оборотные активы",
+      "order": 200
+    },
+    {
+      "id": 3,
+      "name": "Капитал",
+      "order": 500
+    },
+    {
+      "id": 4,
+      "name": "Обязательства",
+      "order": 600
+    }
+  ],
+  "balance_subsection": [
+    {
+      "id": 1,
+      "name": "Основные средства",
+      "section_id": 1,
+      "order": 110
+    },
+    {
+      "id": 2,
+      "name": "Нематериальные активы",
+      "section_id": 1,
+      "order": 120
+    },
+    {
+      "id": 3,
+      "name": "Капитальные вложения",
+      "section_id": 1,
+      "order": 130
+    },
+    {
+      "id": 4,
+      "name": "Прочие внеоборотные активы",
+      "section_id": 1,
+      "order": 140
+    },
+    {
+      "id": 5,
+      "name": "Запасы",
+      "section_id": 2,
+      "order": 210
+    },
+    {
+      "id": 6,
+      "name": "Кредиты и займы выданные",
+      "section_id": 2,
+      "order": 220
+    },
+    {
+      "id": 7,
+      "name": "Дебиторская задолженность",
+      "section_id": 2,
+      "order": 230
+    },
+    {
+      "id": 8,
+      "name": "НДС входящий",
+      "section_id": 2,
+      "order": 240
+    },
+    {
+      "id": 9,
+      "name": "Денежные средства",
+      "section_id": 2,
+      "order": 250
+    },
+    {
+      "id": 10,
+      "name": "Прибыль/убыток",
+      "section_id": 3,
+      "order": 510
+    },
+    {
+      "id": 11,
+      "name": "Уставной капитал",
+      "section_id": 3,
+      "order": 520
+    },
+    {
+      "id": 12,
+      "name": "Долгосрочные кредиты и займы полученные",
+      "section_id": 4,
+      "order": 610
+    },
+    {
+      "id": 13,
+      "name": "Краткосрочные кредиты и займы полученные",
+      "section_id": 4,
+      "order": 620
+    },
+    {
+      "id": 14,
+      "name": "Кредиторская задолженность",
+      "section_id": 4,
+      "order": 630
+    },
+    {
+      "id": 15,
+      "name": "Налоговые обязательства",
+      "section_id": 4,
+      "order": 640
+    },
+    {
+      "id": 16,
+      "name": "Прочие оборотные активы",
+      "section_id": 2,
+      "order": 260
+    },
+    {
+      "id": 17,
+      "name": "Прочие обязательства",
+      "section_id": 4,
+      "order": 650
+    }
+  ],
+  "organization": [
+    {
+      "id": 1,
+      "inn": "3662140157",
+      "name": "ООО \"СОКРАТ 2007\"",
+      "type_id": 3
+    },
+    {
+      "id": 2,
+      "inn": "3662259794",
+      "name": "ООО \"СОКРАТ СПБ\"",
+      "type_id": 4
+    },
+    {
+      "id": 3,
+      "inn": "3662073937",
+      "name": "ООО \"КАТИС\"",
+      "type_id": 2
+    },
+    {
+      "id": 4,
+      "inn": "3663149628",
+      "name": "ООО ГК \"МОТОР ЛЕНД\"",
+      "type_id": 1
+    },
+    {
+      "id": 5,
+      "inn": "3662075500",
+      "name": "ООО \"СОКРАТ\"",
+      "type_id": 3
+    },
+    {
+      "id": 6,
+      "inn": "3661036019",
+      "name": "ООО УК \"ИНВЕСТПРОЕКТ\"",
+      "type_id": 2
+    },
+    {
+      "id": 7,
+      "inn": "3662140164",
+      "name": "ООО \"ВТБ\"",
+      "type_id": 4
+    },
+    {
+      "id": 8,
+      "inn": "3662140140",
+      "name": "ООО \"НОВЫЙ ЛИЗИНГ\"",
+      "type_id": 3
+    },
+    {
+      "id": 9,
+      "inn": "3662267900",
+      "name": "ООО \"АВТОПРОЕКТ\"",
+      "type_id": 4
+    },
+    {
+      "id": 10,
+      "inn": "3123283499",
+      "name": "ООО \"ФОРТУНА-АВТО\"",
+      "type_id": 4
+    },
+    {
+      "id": 11,
+      "inn": "7806115659",
+      "name": "ООО \"ОТКРЫТАЯ ДОРОГА\"",
+      "type_id": 2
+    },
+    {
+      "id": 12,
+      "inn": "366603270340",
+      "name": "ИП Переславцева Светлана Валерьевна",
+      "type_id": 3
+    },
+    {
+      "id": 13,
+      "inn": "361902288900",
+      "name": "ИП Иващенко Ирина Станиславовна",
+      "type_id": 3
+    }
+  ],
+  "organization_type": [
+    {
+      "id": 1,
+      "name": "УК"
+    },
+    {
+      "id": 2,
+      "name": "Балансодержатель"
+    },
+    {
+      "id": 3,
+      "name": "Служебная"
+    },
+    {
+      "id": 4,
+      "name": "Оператор"
+    }
+  ]
+}

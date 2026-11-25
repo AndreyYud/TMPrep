@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Отчёт за период{% endblock %}
+{% block content %}
+<h2 class="page-title">Отчёт по периоду</h2>
+<div id="reportData">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    const orgInn = "{{ org_inn }}";
+    const periodDate = "{{ period_date }}";
+
+    function formatNumber(value) {
+        if (value === undefined || value === null) return '0,00';
+        let num = typeof value === 'string' ? parseFloat(value.replace(',', '.')) : value;
+        if (isNaN(num)) return '0,00';
+        let parts = num.toFixed(2).split('.');
+        let intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        let decPart = parts[1] || '00';
+        return intPart + ',' + decPart;
+    }
+
+    async function loadReport() {
+        const container = document.getElementById('reportData');
+        try {
+            const res = await fetch(`/api/v1/report/${orgInn}/${periodDate}`);
+            if (!res.ok) throw new Error('Ошибка загрузки отчёта');
+            const data = await res.json();
+            if (!data) {
+                container.innerHTML = '<div class="alert alert-warning">Данные не найдены</div>';
+                return;
+            }
+            let html = `
+                <div class="card p-4 mb-4">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Организация:</strong> ${data.organization.inn} – ${data.organization.name || 'не указано'}
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <strong>Дата периода:</strong> ${data.period_date}
+                        </div>
+                    </div>
+                </div>
+                <ul class="nav nav-tabs mt-3" id="reportTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="full-tab" data-bs-toggle="tab" data-bs-target="#full" type="button">Полная ОСВ</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="internal-tab" data-bs-toggle="tab" data-bs-target="#internal" type="button">Внутренние остатки</button>
+                    </li>
+                </ul>
+                <div class="tab-content mt-3">
+                    <div class="tab-pane fade show active" id="full">
+                        <div class="card p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Счёт</th>
+                                            <th class="text-end">Сальдо Дт</th>
+                                            <th class="text-end">Сальдо Кт</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                    `;
+            data.balances.forEach(b => {
+                html += `<tr>
+                    <td>${b.account_code}</td>
+                    <td class="text-end">${formatNumber(b.end_debit)}</td>
+                    <td class="text-end">${formatNumber(b.end_credit)}</td>
+                </tr>`;
+            });
+            html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="internal">
+                        <div class="card p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Счёт</th>
+                                            <th>Контрагент</th>
+                                            <th class="text-end">Сальдо Дт</th>
+                                            <th class="text-end">Сальдо Кт</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                    `;
+            data.internal.forEach(item => {
+                const counterpartyDisplay = item.counterparty_name || item.counterparty_inn;
+                html += `<tr>
+                    <td>${item.account_code}</td>
+                    <td>${counterpartyDisplay}</td>
+                    <td class="text-end">${formatNumber(item.end_debit)}</td>
+                    <td class="text-end">${formatNumber(item.end_credit)}</td>
+                </tr>`;
+            });
+            html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a href="/periods" class="btn btn-secondary mt-3"><i class="bi bi-arrow-left"></i> Назад к периодам</a>
+            `;
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = `<div class="alert alert-danger">Ошибка загрузки: ${err.message}</div>`;
+        }
+    }
+    loadReport();
+</script>
+{% endblock %}

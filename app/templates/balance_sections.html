@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Разделы баланса{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="page-title mb-0">Разделы баланса</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sectionModal" onclick="clearForm()">
+        <i class="bi bi-plus-circle"></i> Добавить раздел
+    </button>
+</div>
+
+<div id="sectionsList">
+    <div class="text-center py-5"><div class="spinner-border text-primary"><span class="visually-hidden">Загрузка...</span></div></div>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="sectionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sectionModalLabel">Раздел</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="sectionForm">
+                    <input type="hidden" id="sectionId">
+                    <div class="mb-3">
+                        <label for="sectionName" class="form-label fw-semibold">Название</label>
+                        <input type="text" class="form-control" id="sectionName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sectionOrder" class="form-label">Порядок</label>
+                        <input type="number" class="form-control" id="sectionOrder" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button class="btn btn-primary" id="saveSectionBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let editSectionId = null;
+
+    function clearForm() {
+        document.getElementById('sectionId').value = '';
+        document.getElementById('sectionName').value = '';
+        document.getElementById('sectionOrder').value = 0;
+        editSectionId = null;
+        document.getElementById('sectionModalLabel').innerText = 'Добавить раздел';
+    }
+
+    async function loadSections() {
+        const container = document.getElementById('sectionsList');
+        try {
+            const res = await fetch('/api/v1/balance-sections/');
+            if (!res.ok) throw new Error('Ошибка загрузки');
+            const data = await res.json();
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <p class="text-muted">Разделы не добавлены.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#sectionModal" onclick="clearForm()">
+                            <i class="bi bi-plus-circle"></i> Добавить первый раздел
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            let html = `
+                <div class="card p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead><tr><th>Название</th><th>Порядок</th><th class="text-end">Действия</th></tr></thead>
+                            <tbody>
+                    `;
+            data.forEach(s => {
+                html += `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td>${s.order}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-warning me-1" data-bs-toggle="modal" data-bs-target="#sectionModal" onclick="editSection(${s.id}, '${s.name}', ${s.order})"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteSection(${s.id})"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table></div></div>`;
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+        }
+    }
+
+    function editSection(id, name, order) {
+        editSectionId = id;
+        document.getElementById('sectionId').value = id;
+        document.getElementById('sectionName').value = name;
+        document.getElementById('sectionOrder').value = order;
+        document.getElementById('sectionModalLabel').innerText = 'Редактировать раздел';
+    }
+
+    async function deleteSection(id) {
+        if (!confirm('Удалить раздел?')) return;
+        try {
+            const res = await fetch(`/api/v1/balance-sections/${id}`, { method: 'DELETE' });
+            if (res.ok) await loadSections();
+            else { const err = await res.json(); alert(err.detail); }
+        } catch (e) { alert(e.message); }
+    }
+
+    document.getElementById('saveSectionBtn').addEventListener('click', async () => {
+        const id = document.getElementById('sectionId').value;
+        const name = document.getElementById('sectionName').value.trim();
+        const order = parseInt(document.getElementById('sectionOrder').value) || 0;
+        if (!name) { alert('Введите название'); return; }
+        const payload = { name, order };
+        const url = id ? `/api/v1/balance-sections/${id}` : '/api/v1/balance-sections/';
+        const method = id ? 'PUT' : 'POST';
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('sectionModal')).hide();
+                await loadSections();
+            } else {
+                const err = await res.json();
+                alert(err.detail || 'Ошибка');
+            }
+        } catch (e) { alert(e.message); }
+    });
+
+    loadSections();
+</script>
+{% endblock %}

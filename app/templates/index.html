@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Главная{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="display-5 fw-bold">ОСВ-Анализ</h1>
+        <p class="lead text-muted">Загружайте оборотно-сальдовые ведомости и получайте сводные отчёты по организации и внутренним расчётам.</p>
+        <hr>
+    </div>
+</div>
+<div class="row mt-4 g-4">
+    <div class="col-md-6">
+        <div class="card h-100 text-center p-4">
+            <div class="card-body">
+                <div class="display-4 mb-3">📤</div>
+                <h5 class="card-title">Загрузить данные</h5>
+                <p class="card-text text-muted">Загрузите полную и внутреннюю ОСВ за выбранный период.</p>
+                <a href="/upload" class="btn btn-primary">Перейти</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100 text-center p-4">
+            <div class="card-body">
+                <div class="display-4 mb-3">📋</div>
+                <h5 class="card-title">Просмотр периодов</h5>
+                <p class="card-text text-muted">Список всех загруженных периодов и детали по каждой организации.</p>
+                <a href="/periods" class="btn btn-primary">Перейти</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

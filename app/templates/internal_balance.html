@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+{% block title %}Сводный баланс внутренних взаиморасчетов{% endblock %}
+{% block extra_css %}
+<style>
+    .total-type {
+        background-color: #0d6efd !important;
+        color: white !important;
+        font-weight: bold !important;
+        font-size: 1.2em !important;
+    }
+    .total-type td {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+    .total-type:hover {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+
+    .total-section {
+        background-color: #e9ecef !important;
+        font-weight: bold !important;
+    }
+    .total-section td {
+        background-color: #e9ecef !important;
+    }
+    .total-section:hover {
+        background-color: #e9ecef !important;
+    }
+
+    .total-subsection {
+        background-color: #f8f9fa !important;
+        font-weight: bold !important;
+    }
+    .total-subsection td {
+        background-color: #f8f9fa !important;
+    }
+    .total-subsection:hover {
+        background-color: #f8f9fa !important;
+    }
+
+    .table-hover tbody tr.total-type:hover,
+    .table-hover tbody tr.total-section:hover,
+    .table-hover tbody tr.total-subsection:hover {
+        background-color: inherit !important;
+    }
+
+    .indent-0 { padding-left: 0px !important; }
+    .indent-1 { padding-left: 20px !important; }
+    .indent-2 { padding-left: 40px !important; }
+    .indent-3 { padding-left: 60px !important; }
+
+    .text-nowrap { white-space: nowrap; }
+    .text-end { text-align: right !important; }
+
+    .header-wrapper {
+        overflow-x: auto;
+        overflow-y: hidden;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-bottom: none;
+        border-radius: 0.375rem 0.375rem 0 0;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: white;
+    }
+    .header-wrapper table {
+        table-layout: fixed;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-bottom: 0;
+        background: white;
+    }
+    .header-wrapper table th {
+        background: #f8f9fc;
+        border-bottom: 2px solid #dee2e6;
+        padding: 8px 12px;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        word-wrap: break-word;
+        white-space: normal;
+        vertical-align: middle;
+    }
+    .header-wrapper table th:first-child {
+        background: #f8f9fc !important;
+        border-right: 1px solid #dee2e6 !important;
+        position: sticky !important;
+        left: 0 !important;
+        z-index: 20 !important;
+        top: 0 !important;
+        width: 400px !important;
+        min-width: 400px !important;
+        max-width: 400px !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+    }
+    .header-wrapper table th:nth-child(2) {
+        background: #f8f9fc !important;
+        border-right: 1px solid #dee2e6 !important;
+        position: sticky !important;
+        left: 400px !important;
+        z-index: 19 !important;
+        top: 0 !important;
+        width: 200px !important;
+        min-width: 200px !important;
+        max-width: 200px !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+    }
+
+    .body-wrapper {
+        max-height: 75vh;
+        overflow: auto;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+        background: white;
+        position: relative;
+    }
+    .body-wrapper table {
+        table-layout: fixed;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-bottom: 0;
+        background: white;
+    }
+    .body-wrapper tbody td:first-child,
+    .body-wrapper tbody th:first-child {
+        position: sticky !important;
+        left: 0 !important;
+        z-index: 5 !important;
+        background: white !important;
+        border-right: 1px solid #dee2e6 !important;
+        width: 400px !important;
+        min-width: 400px !important;
+        max-width: 400px !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+    }
+    .body-wrapper tbody td:nth-child(2),
+    .body-wrapper tbody th:nth-child(2) {
+        position: sticky !important;
+        left: 400px !important;
+        z-index: 4 !important;
+        background: white !important;
+        border-right: 1px solid #dee2e6 !important;
+        width: 200px !important;
+        min-width: 200px !important;
+        max-width: 200px !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+    }
+    .body-wrapper .total-type td:first-child {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+    .body-wrapper .total-section td:first-child {
+        background-color: #e9ecef !important;
+    }
+    .body-wrapper .total-subsection td:first-child {
+        background-color: #f8f9fa !important;
+    }
+    .body-wrapper .total-type td:nth-child(2) {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+    .body-wrapper .total-section td:nth-child(2) {
+        background-color: #e9ecef !important;
+    }
+    .body-wrapper .total-subsection td:nth-child(2) {
+        background-color: #f8f9fa !important;
+    }
+
+    .balance-check {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+    }
+    .balance-check.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    .balance-check.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="page-title mb-0">Сводный баланс внутренних взаиморасчетов</h2>
+</div>
+
+<div class="card p-3 mb-4">
+    <form id="balanceForm" class="row g-3">
+        <div class="col-md-5">
+            <label for="orgSelect" class="form-label">Организации (удерживайте Ctrl для выбора нескольких)</label>
+            <select class="form-select" id="orgSelect" multiple size="5" required>
+                <option value="">Загрузка...</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="periodDate" class="form-label">Дата периода</label>
+            <input type="date" class="form-control" id="periodDate" required>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100 me-2">Показать</button>
+            <button type="button" id="exportBtn" class="btn btn-success w-100">Экспорт Excel</button>
+        </div>
+    </form>
+</div>
+
+<div id="balanceResult">
+    <div class="text-center py-5">
+        <p class="text-muted">Выберите организации и дату для просмотра сводного баланса внутренних взаиморасчетов.</p>
+    </div>
+</div>
+
+<script>
+    async function loadOrganizations() {
+        const select = document.getElementById('orgSelect');
+        try {
+            const res = await fetch('/api/v1/organizations/');
+            if (!res.ok) throw new Error('Ошибка загрузки');
+            const data = await res.json();
+            select.innerHTML = '';
+            data.forEach(org => {
+                const opt = document.createElement('option');
+                opt.value = org.inn;
+                opt.textContent = `${org.inn} – ${org.name || 'без названия'}`;
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            console.error(err);
+            select.innerHTML = '<option value="">Ошибка загрузки</option>';
+        }
+    }
+
+    function fmt(val) {
+        if (val === undefined || val === null) return '0,00';
+        let num = typeof val === 'string' ? parseFloat(val.replace(',', '.')) : val;
+        if (isNaN(num)) return '0,00';
+        let parts = num.toFixed(2).split('.');
+        let intPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        return intPart + ',' + (parts[1] || '00');
+    }
+
+    function renderBalance(data) {
+        const orgs = data.organizations;
+        const orgNames = data.organization_names;
+        const colCount = 3 + orgs.length;
+
+        let headerHtml = `<div class="header-wrapper" id="headerWrapper">`;
+        headerHtml += `<table id="headerTable">`;
+        headerHtml += `<colgroup>`;
+        headerHtml += `<col style="width: 400px; min-width: 400px; max-width: 400px;">`;
+        headerHtml += `<col style="width: 200px; min-width: 200px; max-width: 200px;">`;
+        for (let i = 2; i < colCount; i++) {
+            headerHtml += `<col style="width: auto; min-width: 120px;">`;
+        }
+        headerHtml += `</colgroup>`;
+        headerHtml += `<thead><tr>
+            <th style="width: 400px; min-width: 400px; max-width: 400px; white-space: normal; word-wrap: break-word;">Показатель</th>
+            <th style="width: 200px; min-width: 200px; max-width: 200px; white-space: normal; word-wrap: break-word;">Контрагент</th>
+            <th class="text-end text-nowrap">Итого</th>`;
+        orgs.forEach((inn, idx) => {
+            headerHtml += `<th class="text-end text-nowrap">${orgNames[idx]}</th>`;
+        });
+        headerHtml += `</tr></thead></table></div>`;
+
+        let bodyHtml = `<div class="body-wrapper" id="bodyWrapper">`;
+        bodyHtml += `<table id="bodyTable">`;
+        bodyHtml += `<colgroup>`;
+        bodyHtml += `<col style="width: 400px; min-width: 400px; max-width: 400px;">`;
+        bodyHtml += `<col style="width: 200px; min-width: 200px; max-width: 200px;">`;
+        for (let i = 2; i < colCount; i++) {
+            bodyHtml += `<col style="width: auto; min-width: 120px;">`;
+        }
+        bodyHtml += `</colgroup>`;
+        bodyHtml += `<tbody>`;
+
+        data.rows.forEach(row => {
+            if (row.type === 'type_total') {
+                const typeLabel = row.is_active ? 'Активы ↓' : 'Пассивы ↓';
+                bodyHtml += `<tr class="total-type">
+                    <td style="width: 400px; min-width: 400px; max-width: 400px; position: sticky; left: 0; z-index: 5; background-color: #0d6efd; color: white; border-right: 1px solid #dee2e6; white-space: normal; word-wrap: break-word;"><strong>${typeLabel}</strong></td>
+                    <td style="width: 200px; min-width: 200px; max-width: 200px; position: sticky; left: 400px; z-index: 4; background-color: #0d6efd; color: white; border-right: 1px solid #dee2e6;"></td>
+                    <td class="text-end text-nowrap">${fmt(row.total)}</td>`;
+                orgs.forEach(inn => {
+                    const val = row.org_values && row.org_values[inn] !== undefined ? row.org_values[inn] : 0;
+                    bodyHtml += `<td class="text-end text-nowrap">${fmt(val)}</td>`;
+                });
+                bodyHtml += `</tr>`;
+                return;
+            }
+
+            let rowClass = '';
+            let indent = 0;
+            let label = '';
+            let counterparty = '';
+            if (row.type === 'section_total') {
+                rowClass = 'total-section';
+                indent = 0;
+                label = row.section;
+            } else if (row.type === 'subsection_total') {
+                rowClass = 'total-subsection';
+                indent = 1;
+                label = row.subsection;
+            } else {
+                indent = row.subsection ? 2 : 1;
+                label = row.item;
+                counterparty = row.counterparty_name || row.counterparty_inn || '';
+            }
+
+            const bgColor = rowClass === 'total-section' ? '#e9ecef' : (rowClass === 'total-subsection' ? '#f8f9fa' : 'white');
+            bodyHtml += `<tr class="${rowClass}">`;
+            bodyHtml += `<td style="width: 400px; min-width: 400px; max-width: 400px; position: sticky; left: 0; z-index: 5; background-color: ${bgColor}; border-right: 1px solid #dee2e6; white-space: normal; word-wrap: break-word; padding-left: ${indent * 20}px;">${label}</td>`;
+            bodyHtml += `<td style="width: 200px; min-width: 200px; max-width: 200px; position: sticky; left: 400px; z-index: 4; background-color: ${bgColor}; border-right: 1px solid #dee2e6;">${counterparty}</td>`;
+            bodyHtml += `<td class="text-end text-nowrap">${fmt(row.total)}</td>`;
+            orgs.forEach(inn => {
+                const val = row.org_values && row.org_values[inn] !== undefined ? row.org_values[inn] : 0;
+                bodyHtml += `<td class="text-end text-nowrap">${fmt(val)}</td>`;
+            });
+            bodyHtml += `</tr>`;
+        });
+
+        bodyHtml += `</tbody></table></div>`;
+
+        return headerHtml + bodyHtml;
+    }
+
+    function syncColumnWidths() {
+        const headerTable = document.getElementById('headerTable');
+        const bodyTable = document.getElementById('bodyTable');
+        if (!headerTable || !bodyTable) return;
+
+        const firstRow = bodyTable.querySelector('tbody tr');
+        if (!firstRow) return;
+
+        const cells = firstRow.querySelectorAll('td');
+        if (cells.length < 3) return;
+
+        let maxWidth = 0;
+        for (let i = 2; i < cells.length; i++) {
+            const w = cells[i].offsetWidth;
+            if (w > maxWidth) maxWidth = w;
+        }
+        if (maxWidth === 0) return;
+
+        const targetWidth = maxWidth + 15;
+
+        const bodyCols = bodyTable.querySelectorAll('col');
+        for (let i = 2; i < bodyCols.length; i++) {
+            bodyCols[i].style.width = targetWidth + 'px';
+            bodyCols[i].style.minWidth = targetWidth + 'px';
+            bodyCols[i].style.maxWidth = targetWidth + 'px';
+        }
+
+        const headerCols = headerTable.querySelectorAll('col');
+        for (let i = 2; i < headerCols.length; i++) {
+            headerCols[i].style.width = targetWidth + 'px';
+            headerCols[i].style.minWidth = targetWidth + 'px';
+            headerCols[i].style.maxWidth = targetWidth + 'px';
+        }
+
+        const headerCells = headerTable.querySelectorAll('thead th');
+        for (let i = 2; i < headerCells.length; i++) {
+            headerCells[i].style.width = targetWidth + 'px';
+            headerCells[i].style.minWidth = targetWidth + 'px';
+            headerCells[i].style.maxWidth = targetWidth + 'px';
+        }
+
+        const allRows = bodyTable.querySelectorAll('tbody tr');
+        allRows.forEach(row => {
+            const cellsRow = row.querySelectorAll('td');
+            for (let i = 2; i < cellsRow.length; i++) {
+                cellsRow[i].style.width = targetWidth + 'px';
+                cellsRow[i].style.minWidth = targetWidth + 'px';
+                cellsRow[i].style.maxWidth = targetWidth + 'px';
+            }
+        });
+    }
+
+    function syncScroll(source, target) {
+        const maxScrollSource = source.scrollWidth - source.clientWidth;
+        if (maxScrollSource <= 0) return;
+        const ratio = source.scrollLeft / maxScrollSource;
+        const maxScrollTarget = target.scrollWidth - target.clientWidth;
+        if (maxScrollTarget <= 0) return;
+        target.scrollLeft = ratio * maxScrollTarget;
+    }
+
+    document.getElementById('balanceForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const select = document.getElementById('orgSelect');
+        const selectedOptions = select.selectedOptions;
+        const orgInns = Array.from(selectedOptions).map(opt => opt.value);
+        const periodDate = document.getElementById('periodDate').value;
+
+        if (orgInns.length === 0 || !periodDate) {
+            alert('Выберите хотя бы одну организацию и дату');
+            return;
+        }
+
+        const container = document.getElementById('balanceResult');
+        container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Загрузка...</span></div></div>';
+
+        try {
+            const res = await fetch('/api/v1/internal-balance/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ org_inns: orgInns, period_date: periodDate })
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'Ошибка загрузки');
+            }
+            const data = await res.json();
+
+            const orgList = data.organization_names.join(', ');
+            const skippedMsg = data.skipped_organizations && data.skipped_organizations.length > 0
+                ? `<br><span class="text-warning">Пропущены (нет данных): ${data.skipped_organizations.join(', ')}</span>`
+                : '';
+
+            let totalAssets = 0, totalLiabilities = 0;
+            data.rows.forEach(row => {
+                if (row.type === 'type_total') {
+                    if (row.is_active) totalAssets = row.total;
+                    else totalLiabilities = row.total;
+                }
+            });
+            const isBalanced = Math.abs(totalAssets - totalLiabilities) < 0.01;
+            const checkClass = isBalanced ? 'success' : 'error';
+            const checkIcon = isBalanced ? '✅' : '❌';
+
+            let html = `
+                <div class="card p-3 mb-3">
+                    <div class="row">
+                        <div class="col-md-6"><strong>Организации:</strong> ${orgList}</div>
+                        <div class="col-md-6 text-md-end"><strong>Дата периода:</strong> ${data.period_date}</div>
+                    </div>
+                    ${skippedMsg}
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        ${renderBalance(data)}
+                    </div>
+                </div>
+                <div class="balance-check ${checkClass}">
+                    <strong>Проверка баланса:</strong> Активы = Пассивы ${checkIcon}
+                    (Активы: ${fmt(totalAssets)}, Пассивы: ${fmt(totalLiabilities)})
+                </div>
+            `;
+
+            container.innerHTML = html;
+
+            const headerWrap = document.getElementById('headerWrapper');
+            const bodyWrap = document.getElementById('bodyWrapper');
+            if (headerWrap && bodyWrap) {
+                bodyWrap.addEventListener('scroll', function() {
+                    syncScroll(this, headerWrap);
+                });
+                headerWrap.addEventListener('scroll', function() {
+                    syncScroll(this, bodyWrap);
+                });
+                syncScroll(bodyWrap, headerWrap);
+            }
+
+            syncColumnWidths();
+            setTimeout(syncColumnWidths, 100);
+
+        } catch (err) {
+            container.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+        }
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', async function() {
+        const select = document.getElementById('orgSelect');
+        const selectedOptions = select.selectedOptions;
+        const orgInns = Array.from(selectedOptions).map(opt => opt.value);
+        const periodDate = document.getElementById('periodDate').value;
+
+        if (orgInns.length === 0 || !periodDate) {
+            alert('Выберите хотя бы одну организацию и дату');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/v1/internal-balance/export', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ org_inns: orgInns, period_date: periodDate })
+            });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.detail || 'Ошибка экспорта');
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Внутренние_взаиморасчеты_${periodDate}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            alert('Ошибка экспорта: ' + err.message);
+        }
+    });
+
+    loadOrganizations();
+</script>
+{% endblock %}

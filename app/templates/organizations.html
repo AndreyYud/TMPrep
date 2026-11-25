@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}Организации{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="page-title mb-0">Справочник организаций</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#orgModal" onclick="clearOrgForm()">
+        <i class="bi bi-plus-circle"></i> Добавить организацию
+    </button>
+</div>
+
+<div id="orgsList">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="orgModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orgModalLabel">Организация</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="orgForm">
+                    <input type="hidden" id="orgId">
+                    <div class="mb-3">
+                        <label for="orgInn" class="form-label fw-semibold">ИНН</label>
+                        <input type="text" class="form-control" id="orgInn" placeholder="Введите ИНН" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="orgName" class="form-label fw-semibold">Наименование</label>
+                        <input type="text" class="form-control" id="orgName" placeholder="Введите полное наименование">
+                    </div>
+                    <div class="mb-3">
+                        <label for="orgTypeSelect" class="form-label fw-semibold">Тип организации</label>
+                        <select class="form-select" id="orgTypeSelect">
+                            <option value="">Не выбрано</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveOrgBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let editOrgId = null;
+    let typesData = [];
+
+    // Загружаем типы для выпадающего списка
+    async function loadTypes() {
+        try {
+            const res = await fetch('/api/v1/org-types/');
+            if (!res.ok) throw new Error('Ошибка загрузки типов');
+            typesData = await res.json();
+            const select = document.getElementById('orgTypeSelect');
+            select.innerHTML = '<option value="">Не выбрано</option>';
+            typesData.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            console.error('Ошибка загрузки типов:', err);
+        }
+    }
+
+    function clearOrgForm() {
+        document.getElementById('orgId').value = '';
+        document.getElementById('orgInn').value = '';
+        document.getElementById('orgName').value = '';
+        document.getElementById('orgTypeSelect').value = '';
+        editOrgId = null;
+        document.getElementById('orgModalLabel').innerText = 'Добавить организацию';
+    }
+
+    // Загружаем данные организации по ID и заполняем форму
+    async function editOrg(id) {
+        try {
+            const res = await fetch(`/api/v1/organizations/${id}`);
+            if (!res.ok) throw new Error('Ошибка загрузки данных организации');
+            const org = await res.json();
+
+            // Заполняем поля
+            document.getElementById('orgId').value = org.id;
+            document.getElementById('orgInn').value = org.inn;
+            document.getElementById('orgName').value = org.name || '';
+            document.getElementById('orgTypeSelect').value = org.type_id || '';
+            document.getElementById('orgModalLabel').innerText = 'Редактировать организацию';
+            editOrgId = org.id;
+
+            // Открываем модальное окно
+            const modal = new bootstrap.Modal(document.getElementById('orgModal'));
+            modal.show();
+        } catch (err) {
+            alert('Ошибка загрузки данных: ' + err.message);
+        }
+    }
+
+    async function loadOrganizations() {
+        const container = document.getElementById('orgsList');
+        try {
+            const res = await fetch('/api/v1/organizations/');
+            if (!res.ok) throw new Error('Ошибка загрузки');
+            const data = await res.json();
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <p class="text-muted">Нет организаций.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#orgModal" onclick="clearOrgForm()">
+                            <i class="bi bi-plus-circle"></i> Добавить первую организацию
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            let html = `
+                <div class="card p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ИНН</th>
+                                    <th>Наименование</th>
+                                    <th>Тип</th>
+                                    <th class="text-end">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            data.forEach(org => {
+                const typeName = org.type ? org.type.name : 'не указан';
+                html += `
+                    <tr>
+                        <td><span class="fw-semibold">${org.inn}</span></td>
+                        <td>${org.name || '<span class="text-muted">не указано</span>'}</td>
+                        <td>${typeName}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-warning me-1" onclick="editOrg(${org.id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteOrg(${org.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">
+                    Всего: <span class="badge-count">${data.length}</span>
+                </div>
+            `;
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = `<div class="alert alert-danger">Ошибка загрузки: ${err.message}</div>`;
+        }
+    }
+
+    async function deleteOrg(id) {
+        if (!confirm('Удалить организацию? Это действие нельзя отменить.')) return;
+        try {
+            const res = await fetch(`/api/v1/organizations/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                await loadOrganizations();
+            } else {
+                const err = await res.json();
+                alert('Ошибка: ' + (err.detail || 'Неизвестная ошибка'));
+            }
+        } catch (err) {
+            alert('Ошибка сети: ' + err.message);
+        }
+    }
+
+    document.getElementById('saveOrgBtn').addEventListener('click', async () => {
+        const id = document.getElementById('orgId').value;
+        const inn = document.getElementById('orgInn').value.trim();
+        const name = document.getElementById('orgName').value.trim();
+        const typeId = document.getElementById('orgTypeSelect').value;
+
+        if (!inn) {
+            alert('ИНН обязателен');
+            return;
+        }
+
+        const payload = {
+            inn: inn,
+            name: name || null,
+            type_id: typeId ? parseInt(typeId) : null
+        };
+
+        const url = id ? `/api/v1/organizations/${id}` : '/api/v1/organizations/';
+        const method = id ? 'PUT' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('orgModal'));
+                modal.hide();
+                await loadOrganizations();
+            } else {
+                const err = await res.json();
+                alert('Ошибка: ' + (err.detail || 'Неизвестная ошибка'));
+            }
+        } catch (err) {
+            alert('Ошибка сети: ' + err.message);
+        }
+    });
+
+    // Инициализация
+    (async function init() {
+        await loadTypes();
+        await loadOrganizations();
+    })();
+</script>
+{% endblock %}

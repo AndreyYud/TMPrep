@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Типы организаций{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="page-title mb-0">Справочник типов организаций</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#typeModal" onclick="clearTypeForm()">
+        <i class="bi bi-plus-circle"></i> Добавить тип
+    </button>
+</div>
+
+<div id="typesList">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно -->
+<div class="modal fade" id="typeModal" tabindex="-1" aria-labelledby="typeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="typeModalLabel">Тип организации</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <form id="typeForm">
+                    <input type="hidden" id="typeId">
+                    <div class="mb-3">
+                        <label for="typeName" class="form-label fw-semibold">Название типа</label>
+                        <input type="text" class="form-control" id="typeName" placeholder="Например: оператор" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveTypeBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let editTypeId = null;
+
+    function clearTypeForm() {
+        document.getElementById('typeId').value = '';
+        document.getElementById('typeName').value = '';
+        editTypeId = null;
+        document.getElementById('typeModalLabel').innerText = 'Добавить тип';
+    }
+
+    async function loadTypes() {
+        const container = document.getElementById('typesList');
+        try {
+            const res = await fetch('/api/v1/org-types/');
+            if (!res.ok) throw new Error('Ошибка загрузки');
+            const data = await res.json();
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <p class="text-muted">Нет типов.</p>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#typeModal" onclick="clearTypeForm()">
+                            <i class="bi bi-plus-circle"></i> Добавить первый тип
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            let html = `
+                <div class="card p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Название</th>
+                                    <th class="text-end">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            data.forEach(t => {
+                html += `
+                    <tr>
+                        <td>${t.name}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-warning me-1" data-bs-toggle="modal" data-bs-target="#typeModal" onclick="editType(${t.id}, '${t.name}')">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteType(${t.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">
+                    Всего: <span class="badge-count">${data.length}</span>
+                </div>
+            `;
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = `<div class="alert alert-danger">Ошибка загрузки: ${err.message}</div>`;
+        }
+    }
+
+    function editType(id, name) {
+        editTypeId = id;
+        document.getElementById('typeId').value = id;
+        document.getElementById('typeName').value = name;
+        document.getElementById('typeModalLabel').innerText = 'Редактировать тип';
+    }
+
+    async function deleteType(id) {
+        if (!confirm('Удалить тип? Это действие нельзя отменить.')) return;
+        try {
+            const res = await fetch(`/api/v1/org-types/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                await loadTypes();
+            } else {
+                const err = await res.json();
+                alert('Ошибка: ' + (err.detail || 'Неизвестная ошибка'));
+            }
+        } catch (err) {
+            alert('Ошибка сети: ' + err.message);
+        }
+    }
+
+    document.getElementById('saveTypeBtn').addEventListener('click', async () => {
+        const id = document.getElementById('typeId').value;
+        const name = document.getElementById('typeName').value.trim();
+        if (!name) {
+            alert('Название типа обязательно');
+            return;
+        }
+        const payload = { name };
+        const url = id ? `/api/v1/org-types/${id}` : '/api/v1/org-types/';
+        const method = id ? 'PUT' : 'POST';
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('typeModal'));
+                modal.hide();
+                await loadTypes();
+            } else {
+                const err = await res.json();
+                alert('Ошибка: ' + (err.detail || 'Неизвестная ошибка'));
+            }
+        } catch (err) {
+            alert('Ошибка сети: ' + err.message);
+        }
+    });
+
+    loadTypes();
+</script>
+{% endblock %}

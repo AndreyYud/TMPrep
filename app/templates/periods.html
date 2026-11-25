@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Периоды{% endblock %}
+{% block content %}
+<h2 class="page-title">Загруженные периоды</h2>
+<div id="periodsList">
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Загрузка...</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function loadPeriods() {
+        const container = document.getElementById('periodsList');
+        try {
+            const res = await fetch('/api/v1/periods/');
+            if (!res.ok) throw new Error('Ошибка загрузки');
+            const data = await res.json();
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <p class="text-muted">Периоды ещё не загружены.</p>
+                        <a href="/upload" class="btn btn-primary"><i class="bi bi-upload"></i> Загрузить</a>
+                    </div>
+                `;
+                return;
+            }
+            let html = `
+                <div class="card p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Дата периода</th>
+                                    <th>Организация (ИНН)</th>
+                                    <th class="text-end">Счетов (полная)</th>
+                                    <th class="text-end">Внутренних записей</th>
+                                    <th>Дата загрузки</th>
+                                    <th class="text-end">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+            data.forEach(p => {
+                const created = new Date(p.created_at);
+                const createdStr = created.toLocaleString('ru-RU', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                html += `
+                    <tr>
+                        <td>${p.period_date}</td>
+                        <td>${p.organization_inn}${p.organization_name ? `<br><small>${p.organization_name}</small>` : ''}</td>
+                        <td class="text-end">${p.balances_count}</td>
+                        <td class="text-end">${p.internal_count}</td>
+                        <td>${createdStr}</td>
+                        <td class="text-end">
+                            <a href="/report/${p.organization_inn}/${p.period_date}" class="btn btn-sm btn-info me-1"><i class="bi bi-eye"></i></a>
+                            <button class="btn btn-sm btn-danger" onclick="deletePeriod('${p.organization_inn}', '${p.period_date}')"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">
+                    Всего: <span class="badge-count">${data.length}</span>
+                </div>
+            `;
+            container.innerHTML = html;
+        } catch (err) {
+            container.innerHTML = `<div class="alert alert-danger">Ошибка загрузки списка: ${err.message}</div>`;
+        }
+    }
+
+    async function deletePeriod(orgInn, periodDate) {
+        if (!confirm(`Удалить период ${periodDate} для организации ${orgInn}? Это действие нельзя отменить.`)) return;
+        try {
+            const res = await fetch(`/api/v1/periods/${orgInn}/${periodDate}`, { method: 'DELETE' });
+            if (res.ok) {
+                await loadPeriods();
+            } else {
+                const err = await res.json();
+                alert('Ошибка: ' + (err.detail || 'Неизвестная ошибка'));
+            }
+        } catch (err) {
+            alert('Ошибка сети: ' + err.message);
+        }
+    }
+
+    loadPeriods();
+</script>
+{% endblock %}
